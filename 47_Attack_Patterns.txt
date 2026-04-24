@@ -1,0 +1,451 @@
+ESP32 IoT Honeypot — 47 Attack Pattern Taxonomy
+================================================
+Source: include/attack_patterns.h (firmware) + backend/classifier/patterns.py
+All details verified directly from code. Nothing added or inferred.
+
+Pattern 0 — UNKNOWN
+  Group     : —
+  Protocols : any
+  Indicator : no pattern matched
+  Botnet    : Unknown
+  MITRE     : T0000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GROUP A — CREDENTIAL BRUTE FORCE  (patterns 1–12)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pattern 1 — MIRAI_DEFAULT_CREDS
+  Group     : A
+  Protocols : telnet, ssh
+  Indicator : root/xc3511 or root/vizxv or root/888888 or root/default in first 3 attempts
+  Botnet    : Mirai
+  MITRE     : T1110.001
+
+Pattern 2 — MIRAI_ADMIN_SWEEP
+  Group     : A
+  Protocols : telnet, ssh
+  Indicator : admin/admin → admin/1234 → admin/password tried sequentially, ≥2 attempts
+  Botnet    : Mirai
+  MITRE     : T1110.001
+
+Pattern 3 — MOZI_ROUTER_CREDS
+  Group     : A
+  Protocols : telnet, http
+  Indicator : root/root or Admin/Admin on port 23 and 80 simultaneously
+  Botnet    : Mozi
+  MITRE     : T1110.001
+
+Pattern 4 — HAJIME_SLOW_BRUTE
+  Group     : A
+  Protocols : ssh
+  Indicator : <2 attempts/min, randomised credential order, session dwell >30 s
+  Botnet    : Hajime
+  MITRE     : T1110.001
+
+Pattern 5 — CONTROL4_TARGETED
+  Group     : A
+  Protocols : telnet
+  Indicator : exclusively root/t0talc0ntr0l4! — single attempt, then moves on
+  Botnet    : Control4
+  MITRE     : T1110.001
+
+Pattern 6 — GAFGYT_DEFAULT
+  Group     : A
+  Protocols : telnet
+  Indicator : root/888888 or root/default, inter-attempt interval <500 ms
+  Botnet    : Gafgyt (Bashlite)
+  MITRE     : T1110.001
+
+Pattern 7 — SATORI_HUAWEI
+  Group     : A
+  Protocols : telnet
+  Indicator : root/Zte521 or supervisor username; often targets port 37215 first
+  Botnet    : Satori
+  MITRE     : T1110.001
+
+Pattern 8 — FBOT_FBXROUTER
+  Group     : A
+  Protocols : http, telnet
+  Indicator : supervisor/zyad1234 or telecomadmin/admintelecom credential combos
+  Botnet    : FBot
+  MITRE     : T1110.001
+
+Pattern 9 — GENERIC_DICT_FAST
+  Group     : A
+  Protocols : telnet, ssh
+  Indicator : >10 attempts/min, sequential dictionary ordering, no per-IP state
+  Botnet    : Generic scanner
+  MITRE     : T1110.001
+
+Pattern 10 — CREDENTIAL_STUFFING
+  Group     : A
+  Protocols : http
+  Indicator : POST /login with base64-encoded JSON bodies, User-Agent rotates per request
+  Botnet    : Generic
+  MITRE     : T1110.001
+
+Pattern 11 — SINGLE_SHOT_DEFAULT
+  Group     : A
+  Protocols : telnet, ssh, http
+  Indicator : exactly 1 attempt per connection, always admin/admin or root/root
+  Botnet    : Generic (Shodan/Censys probe)
+  MITRE     : T1110.001
+
+Pattern 12 — SUBNET_COORDINATED
+  Group     : A
+  Protocols : telnet, ssh
+  Indicator : multiple source IPs in the same /24 subnet using identical credentials
+  Botnet    : Coordinated botnet
+  MITRE     : T1110.001
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GROUP B — RECONNAISSANCE & SCANNING  (patterns 13–20)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pattern 13 — PORT_SCAN_SEQUENTIAL
+  Group     : B
+  Protocols : tcp
+  Indicator : connections to ports 22, 23, 80, 1883 within 10 s from the same source IP
+  Botnet    : Masscan / Zmap
+  MITRE     : T1046
+
+Pattern 14 — BANNER_GRAB_ONLY
+  Group     : B
+  Protocols : ssh, telnet
+  Indicator : connects, reads banner, disconnects without sending any data (banner_only flag)
+  Botnet    : Shodan crawler
+  MITRE     : T1046
+
+Pattern 15 — HTTP_FINGERPRINT
+  Group     : B
+  Protocols : http
+  Indicator : GET /, HEAD /, GET /favicon.ico in sequence; reads Server response header
+  Botnet    : Generic web scanner
+  MITRE     : T1046
+
+Pattern 16 — CGI_PROBE
+  Group     : B
+  Protocols : http
+  Indicator : GET requests to /cgi-bin/, /shell, /command, /cmd within a single session
+  Botnet    : Generic CVE scanner
+  MITRE     : T1203
+
+Pattern 17 — MQTT_TOPIC_ENUM
+  Group     : B
+  Protocols : mqtt
+  Indicator : subscribes to # wildcard or $SYS/# immediately after CONNECT
+  Botnet    : Generic MQTT recon
+  MITRE     : T1046
+
+Pattern 18 — UPNP_PROBE
+  Group     : B
+  Protocols : http
+  Indicator : GET /description.xml or GET /rootDesc.xml
+  Botnet    : Generic UPnP scanner
+  MITRE     : T1046
+
+Pattern 19 — MITRE_T1046_NETSCAN
+  Group     : B
+  Protocols : tcp
+  Indicator : SYN packets across >5 ports, no ACK completion, <100 ms between each
+  Botnet    : Generic
+  MITRE     : T1046
+
+Pattern 20 — SLOW_RECON
+  Group     : B
+  Protocols : tcp
+  Indicator : one connection every 5–60 min from the same IP over a 24-hour window
+  Botnet    : APT
+  MITRE     : T1046
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GROUP C — EXPLOITATION ATTEMPTS  (patterns 21–30)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pattern 21 — SHELLSHOCK
+  Group     : C
+  Protocols : http
+  Indicator : () { :;}; string in User-Agent header or any HTTP header/body
+  CVE       : CVE-2014-6271
+  Botnet    : Generic
+  MITRE     : T1059
+
+Pattern 22 — DASAN_RCE
+  Group     : C
+  Protocols : http
+  Indicator : GET /GponForm/diag_Form?images/ with command injection in dest parameter
+  CVE       : CVE-2018-10562
+  Botnet    : Generic
+  MITRE     : T1203
+
+Pattern 23 — HUAWEI_HG532_RCE
+  Group     : C
+  Protocols : http
+  Indicator : POST /ctrlt/DeviceUpgrade_1 with NewStatusURL parameter containing shell commands
+  CVE       : CVE-2017-17215
+  Botnet    : Generic (Satori uses this CVE)
+  MITRE     : T1203
+
+Pattern 24 — REALTEK_SDK_RCE
+  Group     : C
+  Protocols : http
+  Indicator : POST /soap.cgi with UPnP SUBSCRIBE body containing shell commands
+  CVE       : CVE-2021-35395
+  Botnet    : Generic
+  MITRE     : T1203
+
+Pattern 25 — BUFFER_OVERFLOW_TELNET
+  Group     : C
+  Protocols : telnet
+  Indicator : single input line >256 bytes (input_max_len field), often NOP sled pattern
+  Botnet    : Generic
+  MITRE     : T1203
+
+Pattern 26 — DIR_TRAVERSAL_HTTP
+  Group     : C
+  Protocols : http
+  Indicator : ../ sequences or %2e%2e in URL path, attempts to read /etc/passwd or /proc/
+  Botnet    : Generic
+  MITRE     : T1083
+
+Pattern 27 — COMMAND_INJECTION_HTTP
+  Group     : C
+  Protocols : http
+  Indicator : ;, |, && or backtick characters in form field values or GET parameters
+  Botnet    : Generic
+  MITRE     : T1059.004
+
+Pattern 28 — MQTT_MALICIOUS_PUBLISH
+  Group     : C
+  Protocols : mqtt
+  Indicator : PUBLISH to cmnd/ or zigbee2mqtt/ topics with a shell payload in body
+  Botnet    : Generic
+  MITRE     : T1499
+
+Pattern 29 — LOG4SHELL_PROBE
+  Group     : C
+  Protocols : http
+  Indicator : ${jndi:ldap:// string in any HTTP header or body field
+  CVE       : CVE-2021-44228
+  Botnet    : Generic
+  MITRE     : T1203
+
+Pattern 30 — SPRING4SHELL_PROBE
+  Group     : C
+  Protocols : http
+  Indicator : POST request with class.module.classLoader parameter
+  CVE       : CVE-2022-22965
+  Botnet    : Generic
+  MITRE     : T1203
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GROUP D — POST-EXPLOITATION BEHAVIOUR  (patterns 31–39)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pattern 31 — WGET_DROPPER
+  Group     : D
+  Protocols : telnet, ssh
+  Indicator : wget http:// or curl http:// executed after successful authentication
+  Botnet    : Mirai dropper
+  MITRE     : T1105
+
+Pattern 32 — BUSYBOX_WGET_CHAIN
+  Group     : D
+  Protocols : telnet
+  Indicator : /bin/busybox wget followed by /bin/busybox SATORI or /bin/busybox ECCHI
+  Botnet    : Satori / Ecchi
+  MITRE     : T1105
+
+Pattern 33 — CHMOD_EXECUTE
+  Group     : D
+  Protocols : telnet, ssh
+  Indicator : chmod +x on a file (chmod_seen flag) followed immediately by ./ execution
+  Botnet    : Generic dropper
+  MITRE     : T1059
+
+Pattern 34 — CRONTAB_PERSISTENCE
+  Group     : D
+  Protocols : telnet, ssh
+  Indicator : crontab -e or echo >> /etc/cron* — establishing persistence
+  Botnet    : APT
+  MITRE     : T1053
+
+Pattern 35 — IPTABLES_MANIPULATION
+  Group     : D
+  Protocols : telnet, ssh
+  Indicator : iptables -F (flush) or iptables -A (add rule) commands
+  Botnet    : Generic (botnet firewall bypass)
+  MITRE     : T1562
+
+Pattern 36 — CRYPTO_MINER_INSTALL
+  Group     : D
+  Protocols : telnet, ssh
+  Indicator : xmrig, minerd, or mining pool URL (pool.) referenced in command
+  Botnet    : Cryptojacker
+  MITRE     : T1496
+
+Pattern 37 — C2_CALLBACK_ATTEMPT
+  Group     : D
+  Protocols : telnet, ssh
+  Indicator : nc, ncat, or bash -i >& /dev/tcp/ reverse shell commands
+  Botnet    : APT
+  MITRE     : T1059
+
+Pattern 38 — SELF_PROPAGATION
+  Group     : D
+  Protocols : telnet, ssh
+  Indicator : for i in loop scanning subnet combined with telnet connection attempts
+  Botnet    : Worm / self-replicating
+  MITRE     : T1210
+
+Pattern 39 — LOG_WIPE
+  Group     : D
+  Protocols : telnet, ssh
+  Indicator : rm /var/log/, echo > /var/log/messages, or history -c anti-forensic commands
+  Botnet    : APT
+  MITRE     : T1070
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GROUP E — TIMING & PROTOCOL PATTERNS  (patterns 40–47)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pattern 40 — HAWKES_BURST_A
+  Group     : E
+  Protocols : any
+  Indicator : >20 events/min high-intensity burst followed by silence >30 min
+  Detection : Hawkes process — burst score above BURST_A_RATE_THRESH with
+              post-burst silence ≥ BURST_A_SILENCE_SECS (1800 s)
+  Botnet    : Generic
+  MITRE     : T1498
+
+Pattern 41 — HAWKES_BURST_B
+  Group     : E
+  Protocols : any
+  Indicator : moderate sustained rate of 5–15 events/min over >2 hours
+  Detection : Hawkes process — rate within [BURST_B_RATE_MIN, BURST_B_RATE_MAX]
+              sustained for ≥ BURST_B_DURATION_SECS (7200 s)
+  Botnet    : Generic
+  MITRE     : T1498
+
+Pattern 42 — HAWKES_PERIODIC
+  Group     : E
+  Protocols : any
+  Indicator : regular inter-arrival time — coefficient of variation (CV) < 0.30
+  Detection : Hawkes classifier computes CV = std/mean of inter-arrival intervals
+              over a 2-hour rolling window per source IP
+  Botnet    : Generic periodic botnet
+  MITRE     : T1498
+
+Pattern 43 — DIURNAL_NIGHT
+  Group     : E
+  Protocols : any
+  Indicator : ≥70% of events from a source IP fall between 00:00–06:00 UTC
+  Detection : Hawkes classifier checks DIURNAL_NIGHT_FRAC (0.70) against
+              fraction of timestamps in the night window
+  Botnet    : Generic (night-campaign botnet)
+  MITRE     : T1498
+
+Pattern 44 — MULTI_PROTOCOL_CHAIN
+  Group     : E
+  Protocols : telnet, http, mqtt
+  Indicator : same source IP hits Telnet + HTTP + MQTT within a 60 s window
+  Botnet    : Generic
+  MITRE     : T1046
+
+Pattern 45 — TLS_DOWNGRADE
+  Group     : E
+  Protocols : ssh, https
+  Indicator : SSLv3 or TLS 1.0 connection attempt; weak cipher suites offered
+              (RC4-SHA, RC4-MD5, 3DES-SHA, NULL-MD5, EXPORT-RC4-40, TLS_NULL_WITH_NULL_NULL)
+  Detection : TLS honeypot parses ClientHello cipher list and matches _isWeakCipher()
+  Botnet    : Generic
+  MITRE     : T1562
+
+Pattern 46 — MQTT_QOS_ABUSE
+  Group     : E
+  Protocols : mqtt
+  Indicator : rapid QoS 2 PUBLISH messages to exhaust broker state table
+  Botnet    : Generic
+  MITRE     : T1499
+
+Pattern 47 — ZERO_DAY_ANOMALY
+  Group     : E
+  Protocols : any
+  Indicator : anomaly score above threshold; no pattern 1–46 matched by heuristics
+  Detection : backend classifier — Z-score baseline check + DBSCAN clustering
+              in anomaly_detector.py; anomaly feature vector attached to event
+  Botnet    : Unknown
+  MITRE     : T1203
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLASSIFIER COVERAGE BY LAYER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+On-device (ESP32 firmware — attack_patterns.h):
+  Groups A, B, D — patterns 1–12, 13–20, 31–39
+  Runs classify_session() per session inside EventLogger::logEvent()
+  Confidence capped at 70 on-device (_conf() clamp)
+  Output fields: pattern_id, pattern_name, pattern_group, confidence, botnet_family, mitre_technique
+
+Backend classifier (Python microservice — backend/classifier/):
+  Groups C and E — patterns 21–30, 40–47
+  Also re-classifies Groups A/B/D with higher confidence (no cap)
+  Heuristic rules  → heuristic_rules.py  (Groups A–D deterministic)
+  HMM Viterbi      → hmm_classifier.py   (kill-chain sequencing per session_id)
+  Hawkes timing    → hawkes_classifier.py (Group E patterns 40–43)
+  DBSCAN anomaly   → anomaly_detector.py (pattern 47)
+  GeoIP enrichment → geoip_enricher.py   (country, org, hashed IP)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUICK REFERENCE TABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ID  | Group | Name                      | Protocol(s)       | Botnet Family    | MITRE
+----|-------|---------------------------|-------------------|------------------|----------
+ 1  |  A    | MIRAI_DEFAULT_CREDS       | telnet, ssh       | Mirai            | T1110.001
+ 2  |  A    | MIRAI_ADMIN_SWEEP         | telnet, ssh       | Mirai            | T1110.001
+ 3  |  A    | MOZI_ROUTER_CREDS         | telnet, http      | Mozi             | T1110.001
+ 4  |  A    | HAJIME_SLOW_BRUTE         | ssh               | Hajime           | T1110.001
+ 5  |  A    | CONTROL4_TARGETED         | telnet            | Control4         | T1110.001
+ 6  |  A    | GAFGYT_DEFAULT            | telnet            | Gafgyt           | T1110.001
+ 7  |  A    | SATORI_HUAWEI             | telnet            | Satori           | T1110.001
+ 8  |  A    | FBOT_FBXROUTER            | http, telnet      | FBot             | T1110.001
+ 9  |  A    | GENERIC_DICT_FAST         | telnet, ssh       | Generic          | T1110.001
+10  |  A    | CREDENTIAL_STUFFING       | http              | Generic          | T1110.001
+11  |  A    | SINGLE_SHOT_DEFAULT       | telnet, ssh, http | Generic          | T1110.001
+12  |  A    | SUBNET_COORDINATED        | telnet, ssh       | Coordinated      | T1110.001
+13  |  B    | PORT_SCAN_SEQUENTIAL      | tcp               | Masscan          | T1046
+14  |  B    | BANNER_GRAB_ONLY          | ssh, telnet       | Shodan           | T1046
+15  |  B    | HTTP_FINGERPRINT          | http              | Generic          | T1046
+16  |  B    | CGI_PROBE                 | http              | Generic          | T1203
+17  |  B    | MQTT_TOPIC_ENUM           | mqtt              | Generic          | T1046
+18  |  B    | UPNP_PROBE                | http              | Generic          | T1046
+19  |  B    | MITRE_T1046_NETSCAN       | tcp               | Generic          | T1046
+20  |  B    | SLOW_RECON                | tcp               | APT              | T1046
+21  |  C    | SHELLSHOCK                | http              | Generic          | T1059
+22  |  C    | DASAN_RCE                 | http              | Generic          | T1203
+23  |  C    | HUAWEI_HG532_RCE          | http              | Generic          | T1203
+24  |  C    | REALTEK_SDK_RCE           | http              | Generic          | T1203
+25  |  C    | BUFFER_OVERFLOW_TELNET    | telnet            | Generic          | T1203
+26  |  C    | DIR_TRAVERSAL_HTTP        | http              | Generic          | T1083
+27  |  C    | COMMAND_INJECTION_HTTP    | http              | Generic          | T1059.004
+28  |  C    | MQTT_MALICIOUS_PUBLISH    | mqtt              | Generic          | T1499
+29  |  C    | LOG4SHELL_PROBE           | http              | Generic          | T1203
+30  |  C    | SPRING4SHELL_PROBE        | http              | Generic          | T1203
+31  |  D    | WGET_DROPPER              | telnet, ssh       | Mirai            | T1105
+32  |  D    | BUSYBOX_WGET_CHAIN        | telnet            | Satori           | T1105
+33  |  D    | CHMOD_EXECUTE             | telnet, ssh       | Generic          | T1059
+34  |  D    | CRONTAB_PERSISTENCE       | telnet, ssh       | APT              | T1053
+35  |  D    | IPTABLES_MANIPULATION     | telnet, ssh       | Generic          | T1562
+36  |  D    | CRYPTO_MINER_INSTALL      | telnet, ssh       | Cryptojacker     | T1496
+37  |  D    | C2_CALLBACK_ATTEMPT       | telnet, ssh       | APT              | T1059
+38  |  D    | SELF_PROPAGATION          | telnet, ssh       | Worm             | T1210
+39  |  D    | LOG_WIPE                  | telnet, ssh       | APT              | T1070
+40  |  E    | HAWKES_BURST_A            | any               | Generic          | T1498
+41  |  E    | HAWKES_BURST_B            | any               | Generic          | T1498
+42  |  E    | HAWKES_PERIODIC           | any               | Generic          | T1498
+43  |  E    | DIURNAL_NIGHT             | any               | Generic          | T1498
+44  |  E    | MULTI_PROTOCOL_CHAIN      | telnet, http, mqtt| Generic          | T1046
+45  |  E    | TLS_DOWNGRADE             | ssh, https        | Generic          | T1562
+46  |  E    | MQTT_QOS_ABUSE            | mqtt              | Generic          | T1499
+47  |  E    | ZERO_DAY_ANOMALY          | any               | Unknown          | T1203
